@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Sync changes to/from stack
-unstable_stack="ubuntu@15.125.103.162"
+unstable_stack="ubuntu@192.168.0.1"
 lib_path="/mnt/deploy/polaris-storage/.venv-storage/lib/python2.7/site-packages"
 backup="backup"
 billiard="billiard"
