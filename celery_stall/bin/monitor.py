@@ -160,7 +160,8 @@ def setup_logger(log=False):
 
 def print_conf(logger, options):
     print("\nStart monitor...")
-    print("\nlog file: monitor.log\n")
+    log = "monitor.log" if options.log else None
+    print("\nlog file:{}\n".format(log))
 
 def main():
 
