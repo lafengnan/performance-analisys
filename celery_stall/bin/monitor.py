@@ -7,7 +7,7 @@ from optparse import OptionParser
 
 from celery import Celery
 import logging
-from logging import Formatter, FileHandler, StreamHandler
+from logging import FileHandler, StreamHandler
 
 
 
