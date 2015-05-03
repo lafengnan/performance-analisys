@@ -75,57 +75,54 @@ class Monitor(object):
     def _get_func_name(self):
         return inspect.stack()[1][3]
 
-    def _task_sent(self, event):
+    def _get_task(self, event):
         self.state.event(event)
-        task = self.state.tasks.get(event['uuid'])
+        return self.state.tasks.get(event['uuid'])
+
+    def _task_sent(self, event):
+        task = self._get_task(event)
         if self.will_monitor_specific_task and self.tasks == task.name \
                 or not self.will_monitor_specific_task:
             self.logger.info('TASK SENT: %s[%s] %s' % (
             task.name, task.uuid, task.info(), ))
 
     def _task_received(self, event):
-        self.state.event(event)
-        task = self.state.tasks.get(event['uuid'])
+        task = self._get_task(event)
         if self.will_monitor_specific_task and self.tasks == task.name \
                 or not self.will_monitor_specific_task:
             self.logger.info('TASK RECEIVED: %s[%s] %s' % (
                 task.name, task.uuid, task.info(), ))
 
     def _task_started(self, event):
-        self.state.event(event)
-        task = self.state.tasks.get(event['uuid'])
+        task = self._get_task(event)
         if self.will_monitor_specific_task and self.tasks == task.name \
                 or not self.will_monitor_specific_task:
             self.logger.info('TASK STARTED: %s[%s] %s' % (
             task.name, task.uuid, task.info(), ))
 
     def _task_succeeded(self, event):
-        self.state.event(event)
-        task = self.state.tasks.get(event['uuid'])
+        task = self._get_task(event)
         if self.will_monitor_specific_task and self.tasks == task.name \
                 or not self.will_monitor_specific_task:
             self.logger.info('TASK SUCCEEDED: %s[%s] %s' % (
             task.name, task.uuid, task.info(), ))
 
     def _task_failed(self, event):
-        self.state.event(event)
-        task = self.state.tasks.get(event['uuid'])
+        task = self._get_task(event)
         if self.will_monitor_specific_task and self.tasks == task.name \
                 or not self.will_monitor_specific_task:
             self.logger.info('TASK FAILED: %s[%s] %s' % (
             task.name, task.uuid, task.info(), ))
 
     def _task_retried(self, event):
-        self.state.event(event)
-        task = self.state.tasks.get(event['uuid'])
+        task = self._get_task(event)
         if self.will_monitor_specific_task and self.tasks == task.name \
                 or not self.will_monitor_specific_task:
             self.logger.info('TASK RETRIED: %s[%s] %s' % (
             task.name, task.uuid, task.info(), ))
 
     def _task_revoked(self, event):
-        self.state.event(event)
-        task = self.state.tasks.get(event['uuid'])
+        task = self._get_task(event)
         if self.will_monitor_specific_task and self.tasks == task.name \
                 or not self.will_monitor_specific_task:
             self.logger.info('TASK REVOKED: %s[%s] %s' % (
