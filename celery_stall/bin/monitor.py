@@ -3,7 +3,7 @@
 
 import sys
 import inspect
-from optparse import OptionParser
+from optparse import Option, OptionParser
 
 from celery import Celery
 import logging
@@ -19,6 +19,22 @@ USAGE = """
 %prog <command> [options]
 Commands:
 """ + '\n'.join(["%10s: " % x for x in Commands])
+
+class MultipleOption(Option):
+
+    ACTIONS = Option.ACTIONS + ("extend",)
+    STORE_ACTIONS = Option.STORE_ACTIONS + ("extend",)
+    TYPED_ACTIONS = Option.TYPED_ACTIONS + ("extend",)
+    ALWAYS_TYPED_ACTIONS = Option.ALWAYS_TYPED_ACTIONS + ("extend",)
+
+    def take_action(self, action, dest, opt, value, values, parser):
+        if action == "extend":
+            lvalue = value.split(",")
+            values.ensure_value(dest, []).extend(lvalue)
+        else:
+            Option.take_action(
+                self, action, dest, opt, value, values, parser)
+
 
 class Stat(object):
     """
@@ -67,8 +83,8 @@ class Monitor(object):
         self.state = self.app.events.State()
         self.stats = kwargs.get('stat', Stat())
         self.event_to_monitor = kwargs.get('event', 'all')
-        self.tasks= kwargs.get('task', 'all')
-        self.will_monitor_specific_task = True if self.tasks != 'all' else False
+        self.tasks= kwargs.get('task') or ['ALL Tasks']
+        self.will_monitor_specific_task = True if self.tasks != ['ALL Tasks'] else False
         self.verbose = kwargs.get('verbose', False)
         self.logger = logger
 
@@ -81,50 +97,49 @@ class Monitor(object):
 
     def _task_sent(self, event):
         task = self._get_task(event)
-        if self.will_monitor_specific_task and self.tasks == task.name \
-                or not self.will_monitor_specific_task:
-            self.logger.info('TASK SENT: %s[%s] %s' % (
-            task.name, task.uuid, task.info(), ))
+        if not self.will_monitor_specific_task or \
+                (self.will_monitor_specific_task and task.name in self.tasks):
+            self.logger.info('TASK SENT: %s[%s] %s' % ( task.name, task.uuid, task.info(), ))
 
     def _task_received(self, event):
         task = self._get_task(event)
-        if self.will_monitor_specific_task and self.tasks == task.name \
-                or not self.will_monitor_specific_task:
+        if not self.will_monitor_specific_task or \
+                (self.will_monitor_specific_task and task.name in self.tasks):
             self.logger.info('TASK RECEIVED: %s[%s] %s' % (
                 task.name, task.uuid, task.info(), ))
 
     def _task_started(self, event):
         task = self._get_task(event)
-        if self.will_monitor_specific_task and self.tasks == task.name \
-                or not self.will_monitor_specific_task:
+        if not self.will_monitor_specific_task or \
+                (self.will_monitor_specific_task and task.name in self.tasks):
             self.logger.info('TASK STARTED: %s[%s] %s' % (
             task.name, task.uuid, task.info(), ))
 
     def _task_succeeded(self, event):
         task = self._get_task(event)
-        if self.will_monitor_specific_task and self.tasks == task.name \
-                or not self.will_monitor_specific_task:
+        if not self.will_monitor_specific_task or \
+                (self.will_monitor_specific_task and task.name in self.tasks):
             self.logger.info('TASK SUCCEEDED: %s[%s] %s' % (
             task.name, task.uuid, task.info(), ))
 
     def _task_failed(self, event):
         task = self._get_task(event)
-        if self.will_monitor_specific_task and self.tasks == task.name \
-                or not self.will_monitor_specific_task:
+        if not self.will_monitor_specific_task or \
+                (self.will_monitor_specific_task and task.name in self.tasks):
             self.logger.info('TASK FAILED: %s[%s] %s' % (
             task.name, task.uuid, task.info(), ))
 
     def _task_retried(self, event):
         task = self._get_task(event)
-        if self.will_monitor_specific_task and self.tasks == task.name \
-                or not self.will_monitor_specific_task:
+        if not self.will_monitor_specific_task or \
+                (self.will_monitor_specific_task and task.name in self.tasks):
             self.logger.info('TASK RETRIED: %s[%s] %s' % (
             task.name, task.uuid, task.info(), ))
 
     def _task_revoked(self, event):
         task = self._get_task(event)
-        if self.will_monitor_specific_task and self.tasks == task.name \
-                or not self.will_monitor_specific_task:
+        if not self.will_monitor_specific_task or \
+                (self.will_monitor_specific_task and task.name in self.tasks):
             self.logger.info('TASK REVOKED: %s[%s] %s' % (
             task.name, task.uuid, task.info(), ))
 
@@ -135,7 +150,7 @@ class Monitor(object):
             events = [self.event_to_monitor]
         handlers = {k:getattr(self, "_%s"%k.replace('-','_')) for k in events}
         if self.verbose:
-            self.logger.info("Monitoring {e} for {t} task...".format(e=events, t=self.tasks))
+            self.logger.info("Monitoring events: {e}\n{t} are in monitoring...".format(e=events, t=self.tasks))
         with self.app.connection() as connection:
             recv = self.app.events.Receiver(connection, handlers=handlers)
             recv.capture(limit=None, timeout=None, wakeup=True)
@@ -162,15 +177,15 @@ def print_conf(logger, options):
 
 def main():
 
-    parser = OptionParser(USAGE)
+    parser = OptionParser(option_class=MultipleOption, usage=USAGE)
     parser.add_option('-e', '--event', type="string", dest="event", default="all",
                       help="The event to monitoring")
     parser.add_option('-l', action='store_true', dest='log', default=False,
                       help='the log to store info')
     parser.add_option('-r', '--report', type='string', dest='report', default='status.csv',
                       help='the csv report to read')
-    parser.add_option('-t', '--task', type='string', dest='task', default='all',
-                      help='The task to monitoring')
+    parser.add_option('-t', '--tasks', action='extend', type='string', dest='task',
+                      help='The tasks to monitoring, seperate in comma')
     parser.add_option('-v', action='store_true', dest='verbose', default=False,
                       help='verbose mode')
 
