@@ -110,7 +110,7 @@ class TopLogAnalyzer(object):
     @user: the user of the pids
 
     """
-    csv_header = ('timestamp', 'load_1', 'load_5', 'load_10',
+    csv_header = ('timestamp', 'load_1', 'load_5', 'load_15',
                   'pid', 'virt', 'res', 'shr', 'cpu', 'mem'
                   )
     def __init__(self, log=None, pids=0, user='ubuntu', *args, **kwargs):
@@ -159,7 +159,7 @@ class TopLogAnalyzer(object):
 
         def _collect_top_line(line):
             words = line.rstrip('\n').split(' ')
-            # timestamp, load_1, load_5, load_10
+            # timestamp, load_1, load_5, load_15
             headline_data = [words[2], words[-3].rstrip(','), words[-2].rstrip(','), words[-1]]
             return headline_data
 
