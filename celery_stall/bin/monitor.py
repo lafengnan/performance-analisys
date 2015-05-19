@@ -156,13 +156,12 @@ class Monitor(object):
             recv.capture(limit=None, timeout=None, wakeup=True)
 
 
-def setup_logger(log=False):
+def setup_logger(log_file="task.log"):
     FORMAT = '[%(asctime)-15s] %(message)s'
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
     handlers = [StreamHandler(stream=sys.stdout)]
-    if log:
-        handlers.append(FileHandler("monitor.log"))
+    handlers.append(FileHandler(log_file))
     format = logging.Formatter(FORMAT)
     for h in handlers:
         h.setFormatter(format)
@@ -172,15 +171,16 @@ def setup_logger(log=False):
 
 def print_conf(logger, options):
     print("\nStart monitor...")
-    log = "monitor.log" if options.log else None
-    print("\nlog file:{}\n".format(log))
+    print("\nlog file:{}\n".format(options.log))
 
 def main():
 
     parser = OptionParser(option_class=MultipleOption, usage=USAGE)
     parser.add_option('-e', '--event', type="string", dest="event", default="all",
                       help="The event to monitoring")
-    parser.add_option('-l', action='store_true', dest='log', default=False,
+    #parser.add_option('-l', action='store_true', dest='log', default=False,
+    #                  help='the log to store info')
+    parser.add_option('-l', '--log', type='string', dest='log', default="task.log",
                       help='the log to store info')
     parser.add_option('-r', '--report', type='string', dest='report', default='status.csv',
                       help='the csv report to read')
